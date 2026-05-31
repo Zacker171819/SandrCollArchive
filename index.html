@@ -30,7 +30,6 @@
     overflow-x: hidden;
   }
 
-  /* Grain overlay */
   body::before {
     content: '';
     position: fixed;
@@ -41,7 +40,6 @@
     opacity: 0.35;
   }
 
-  /* Header */
   header {
     padding: 4rem 2rem 2rem;
     border-bottom: 1px solid var(--border);
@@ -76,7 +74,6 @@
     line-height: 1.8;
   }
 
-  /* Grid */
   main {
     padding: 3rem 2rem 5rem;
     max-width: 1200px;
@@ -89,7 +86,6 @@
     gap: 1.5rem;
   }
 
-  /* Card */
   .card {
     background: var(--card);
     border: 1px solid var(--border);
@@ -113,21 +109,28 @@
     opacity: 1;
   }
 
-  /* Thumbnail area */
   .thumb-wrap {
     position: relative;
     width: 100%;
     aspect-ratio: 16/9;
-    background: #000;
+    background: #111;
     overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
-  .thumb-wrap video {
+  .thumb-placeholder {
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    display: block;
-    pointer-events: none;
+    background: repeating-linear-gradient(
+      45deg,
+      #151513,
+      #151513 10px,
+      #111110 10px,
+      #111110 20px
+    );
+    opacity: 0.8;
   }
 
   .thumb-overlay {
@@ -162,7 +165,6 @@
     margin-left: 3px;
   }
 
-  /* Card body */
   .card-body {
     padding: 1rem 1rem 1.2rem;
     border-top: 1px solid var(--border);
@@ -196,7 +198,6 @@
     padding: 2px 8px;
   }
 
-  /* Lightbox overlay */
   #lightbox {
     display: none;
     position: fixed;
@@ -226,7 +227,7 @@
 
   #lightbox-inner video {
     width: 100%;
-    display: block;
+    display: none;
     background: #000;
     outline: none;
   }
@@ -269,7 +270,28 @@
     color: var(--accent);
   }
 
-  /* Footer */
+  #lb-loading {
+    display: none;
+    padding: 3rem 0;
+    text-align: center;
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  #lb-loading .dots::after {
+    content: '';
+    animation: dots 1.2s steps(4, end) infinite;
+  }
+
+  @keyframes dots {
+    0%   { content: ''; }
+    25%  { content: '.'; }
+    50%  { content: '..'; }
+    75%  { content: '...'; }
+  }
+
   footer {
     border-top: 1px solid var(--border);
     padding: 1.5rem 2rem;
@@ -304,6 +326,7 @@
       <div id="lightbox-title"></div>
       <button id="lightbox-close" onclick="closeLightbox()">✕ chiudi</button>
     </div>
+    <div id="lb-loading"><span class="dots">Caricamento</span></div>
     <video id="lightbox-video" controls playsinline></video>
   </div>
 </div>
@@ -318,7 +341,7 @@ const videos = [
     tag: "Collab"
   },
   {
-    file: "https://github.com/Zacker171819/SandrCollArchive/raw/refs/heads/main/Sandrini%20ytp%20full%20collab.mp4",
+    file: "https://github.com/Zacker171819/SandrCollArchive/raw/refs/heads/main/Sandrini%20ytp%20incanza%20spiaggia.mp4",
     title: "Incanza Spiaggia",
     tag: "Edit"
   },
@@ -334,15 +357,15 @@ const videos = [
   }
 ];
 
+const blobCache = {};
 const grid = document.getElementById('grid');
 
 videos.forEach((v, i) => {
-  const src = v.file;
   const card = document.createElement('div');
   card.className = 'card';
   card.innerHTML = `
     <div class="thumb-wrap">
-      <video src="${src}" muted preload="metadata" tabindex="-1"></video>
+      <div class="thumb-placeholder"></div>
       <div class="thumb-overlay"></div>
       <div class="play-btn">
         <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
@@ -354,38 +377,56 @@ videos.forEach((v, i) => {
       <span class="card-tag">${v.tag}</span>
     </div>
   `;
-  card.addEventListener('click', () => openLightbox(src, v.title));
+  card.addEventListener('click', () => openLightbox(v.file, v.title));
   grid.appendChild(card);
-
-  // Seek to 2s for a better thumbnail
-  const vid = card.querySelector('video');
-  vid.addEventListener('loadedmetadata', () => { vid.currentTime = 2; });
 });
 
-// Lightbox
 const lightbox = document.getElementById('lightbox');
 const lbVideo  = document.getElementById('lightbox-video');
 const lbTitle  = document.getElementById('lightbox-title');
+const lbLoading = document.getElementById('lb-loading');
 
-function openLightbox(src, title) {
-  lbVideo.src = src;
+async function openLightbox(url, title) {
   lbTitle.textContent = title;
+  lbVideo.style.display = 'none';
+  lbVideo.src = '';
+  lbLoading.style.display = 'block';
+  lbLoading.style.color = 'var(--accent)';
+  lbLoading.innerHTML = '<span class="dots">Caricamento</span>';
   lightbox.classList.add('active');
-  lbVideo.play();
+
+  try {
+    let blobUrl = blobCache[url];
+    if (!blobUrl) {
+      const resp = await fetch("https://corsproxy.io/?" + encodeURIComponent(url));
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const blob = await resp.blob();
+      blobUrl = URL.createObjectURL(blob);
+      blobCache[url] = blobUrl;
+    }
+    lbLoading.style.display = 'none';
+    lbVideo.src = blobUrl;
+    lbVideo.style.display = 'block';
+    lbVideo.play();
+  } catch (err) {
+    lbLoading.innerHTML = '⚠ Errore nel caricamento del video';
+    lbLoading.style.color = '#e05555';
+    console.error(err);
+  }
 }
 
 function closeLightbox() {
   lightbox.classList.remove('active');
   lbVideo.pause();
   lbVideo.src = '';
+  lbVideo.style.display = 'none';
+  lbLoading.style.display = 'none';
 }
 
-// Close on backdrop click
 lightbox.addEventListener('click', (e) => {
   if (e.target === lightbox) closeLightbox();
 });
 
-// ESC key
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeLightbox();
 });
