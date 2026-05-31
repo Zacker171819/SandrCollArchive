@@ -313,22 +313,22 @@
 <script>
 const videos = [
   {
-    file: "Sandrini_ytp_full_collab.mp4",
+    file: "https://github.com/Zacker171819/SandrCollArchive/raw/refs/heads/main/Sandrini%20ytp%20full%20collab.mp4",
     title: "Full Collab",
     tag: "Collab"
   },
   {
-    file: "Sandrini_ytp_incanza_spiaggia.mp4",
+    file: "https://github.com/Zacker171819/SandrCollArchive/raw/refs/heads/main/Sandrini%20ytp%20full%20collab.mp4",
     title: "Incanza Spiaggia",
     tag: "Edit"
   },
   {
-    file: "Sandrux_ytp.mp4",
+    file: "https://github.com/Zacker171819/SandrCollArchive/raw/refs/heads/main/Sandrux%20ytp.mp4",
     title: "Sandrux YTP",
     tag: "Cut"
   },
   {
-    file: "ytp_Sandrini_-_Obbligatorio_soffrire.mp4",
+    file: "https://github.com/Zacker171819/SandrCollArchive/raw/refs/heads/main/ytp%20Sandrini%20-%20Obbligatorio%20soffrire.mp4",
     title: "Obbligatorio Soffrire",
     tag: "YTP"
   }
@@ -337,7 +337,7 @@ const videos = [
 const grid = document.getElementById('grid');
 
 videos.forEach((v, i) => {
-  const src = `/mnt/user-data/uploads/${v.file}`;
+  const src = v.file;
   const card = document.createElement('div');
   card.className = 'card';
   card.innerHTML = `
