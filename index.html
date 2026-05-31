@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SANDRINI YTP — Archive</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a08;
+    --surface: #111110;
+    --card: #191917;
+    --border: #2a2a27;
+    --accent: #e8c84a;
+    --accent-dim: #b89a30;
+    --text: #f0ede0;
+    --muted: #888880;
+    --overlay-bg: rgba(0,0,0,0.88);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.35;
+  }
+
+  /* Header */
+  header {
+    padding: 4rem 2rem 2rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3.5rem, 10vw, 7rem);
+    letter-spacing: 0.04em;
+    line-height: 0.9;
+    color: var(--accent);
+  }
+
+  .logo span {
+    display: block;
+    color: var(--text);
+    font-size: 0.35em;
+    letter-spacing: 0.2em;
+  }
+
+  .header-meta {
+    text-align: right;
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    line-height: 1.8;
+  }
+
+  /* Grid */
+  main {
+    padding: 3rem 2rem 5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+  }
+
+  /* Card */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .card:hover {
+    border-color: var(--accent);
+    transform: translateY(-3px);
+  }
+
+  .card:hover .play-btn {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  .card:hover .thumb-overlay {
+    opacity: 1;
+  }
+
+  /* Thumbnail area */
+  .thumb-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: #000;
+    overflow: hidden;
+  }
+
+  .thumb-wrap video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+  }
+
+  .thumb-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .play-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.85);
+    width: 52px;
+    height: 52px;
+    border: 2px solid var(--accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+    background: rgba(0,0,0,0.6);
+  }
+
+  .play-btn svg {
+    fill: var(--accent);
+    width: 20px;
+    height: 20px;
+    margin-left: 3px;
+  }
+
+  /* Card body */
+  .card-body {
+    padding: 1rem 1rem 1.2rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .card-index {
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+
+  .card-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.05em;
+    line-height: 1.1;
+    color: var(--text);
+  }
+
+  .card-tag {
+    margin-top: 0.6rem;
+    display: inline-block;
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+  }
+
+  /* Lightbox overlay */
+  #lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--overlay-bg);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  #lightbox.active {
+    display: flex;
+  }
+
+  #lightbox-inner {
+    width: 100%;
+    max-width: 900px;
+    position: relative;
+    animation: popIn 0.2s ease-out;
+  }
+
+  @keyframes popIn {
+    from { transform: scale(0.94); opacity: 0; }
+    to   { transform: scale(1);    opacity: 1; }
+  }
+
+  #lightbox-inner video {
+    width: 100%;
+    display: block;
+    background: #000;
+    outline: none;
+  }
+
+  #lightbox-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    gap: 1rem;
+  }
+
+  #lightbox-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  #lightbox-close {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.45rem 0.9rem;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+    flex-shrink: 0;
+  }
+
+  #lightbox-close:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 1.5rem 2rem;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    Sandrini<span>YTP — Archive</span>
+  </div>
+  <div class="header-meta">
+    4 video<br>
+    Collab · Cuts · Edits<br>
+    Click to watch
+  </div>
+</header>
+
+<main>
+  <div class="grid" id="grid"></div>
+</main>
+
+<div id="lightbox">
+  <div id="lightbox-inner">
+    <div id="lightbox-bar">
+      <div id="lightbox-title"></div>
+      <button id="lightbox-close" onclick="closeLightbox()">✕ chiudi</button>
+    </div>
+    <video id="lightbox-video" controls playsinline></video>
+  </div>
+</div>
+
+<footer>Sandrini YTP Archive — tutti i diritti riservati ai rispettivi autori</footer>
+
+<script>
+const videos = [
+  {
+    file: "Sandrini_ytp_full_collab.mp4",
+    title: "Full Collab",
+    tag: "Collab"
+  },
+  {
+    file: "Sandrini_ytp_incanza_spiaggia.mp4",
+    title: "Incanza Spiaggia",
+    tag: "Edit"
+  },
+  {
+    file: "Sandrux_ytp.mp4",
+    title: "Sandrux YTP",
+    tag: "Cut"
+  },
+  {
+    file: "ytp_Sandrini_-_Obbligatorio_soffrire.mp4",
+    title: "Obbligatorio Soffrire",
+    tag: "YTP"
+  }
+];
+
+const grid = document.getElementById('grid');
+
+videos.forEach((v, i) => {
+  const src = `/mnt/user-data/uploads/${v.file}`;
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `
+    <div class="thumb-wrap">
+      <video src="${src}" muted preload="metadata" tabindex="-1"></video>
+      <div class="thumb-overlay"></div>
+      <div class="play-btn">
+        <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="card-index">№ ${String(i+1).padStart(2,'0')}</div>
+      <div class="card-title">${v.title}</div>
+      <span class="card-tag">${v.tag}</span>
+    </div>
+  `;
+  card.addEventListener('click', () => openLightbox(src, v.title));
+  grid.appendChild(card);
+
+  // Seek to 2s for a better thumbnail
+  const vid = card.querySelector('video');
+  vid.addEventListener('loadedmetadata', () => { vid.currentTime = 2; });
+});
+
+// Lightbox
+const lightbox = document.getElementById('lightbox');
+const lbVideo  = document.getElementById('lightbox-video');
+const lbTitle  = document.getElementById('lightbox-title');
+
+function openLightbox(src, title) {
+  lbVideo.src = src;
+  lbTitle.textContent = title;
+  lightbox.classList.add('active');
+  lbVideo.play();
+}
+
+function closeLightbox() {
+  lightbox.classList.remove('active');
+  lbVideo.pause();
+  lbVideo.src = '';
+}
+
+// Close on backdrop click
+lightbox.addEventListener('click', (e) => {
+  if (e.target === lightbox) closeLightbox();
+});
+
+// ESC key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeLightbox();
+});
+</script>
+</body>
+</html>
