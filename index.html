@@ -10,7 +10,7 @@
   :root {
     --bg: #0a0a08; --card: #191917; --border: #2a2a27;
     --accent: #e8c84a; --text: #f0ede0; --muted: #888880;
-    --overlay-bg: rgba(0,0,0,0.88);
+    --overlay-bg: rgba(0,0,0,0.92);
   }
   body { background: var(--bg); color: var(--text); font-family: 'Space Mono', monospace; min-height: 100vh; overflow-x: hidden; }
   body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events: none; z-index: 1000; opacity: 0.35; }
@@ -24,8 +24,8 @@
   .card:hover { border-color: var(--accent); transform: translateY(-3px); }
   .card:hover .play-btn { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   .card:hover .thumb-overlay { opacity: 1; }
-  .thumb-wrap { position: relative; width: 100%; aspect-ratio: 16/9; background: #111; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-  .thumb-placeholder { width: 100%; height: 100%; background: repeating-linear-gradient(45deg, #151513, #151513 10px, #111110 10px, #111110 20px); opacity: 0.8; }
+  .thumb-wrap { position: relative; width: 100%; aspect-ratio: 16/9; background: #111; overflow: hidden; }
+  .thumb-placeholder { width: 100%; height: 100%; background: repeating-linear-gradient(45deg, #151513, #151513 10px, #111110 10px, #111110 20px); }
   .thumb-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.3); opacity: 0; transition: opacity 0.2s; }
   .play-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.85); width: 52px; height: 52px; border: 2px solid var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s, transform 0.2s; background: rgba(0,0,0,0.6); }
   .play-btn svg { fill: var(--accent); width: 20px; height: 20px; margin-left: 3px; }
@@ -35,16 +35,13 @@
   .card-tag { margin-top: 0.6rem; display: inline-block; font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); background: rgba(255,255,255,0.04); border: 1px solid var(--border); padding: 2px 8px; }
   #lightbox { display: none; position: fixed; inset: 0; background: var(--overlay-bg); z-index: 9999; align-items: center; justify-content: center; padding: 1rem; }
   #lightbox.active { display: flex; }
-  #lightbox-inner { width: 100%; max-width: 900px; position: relative; animation: popIn 0.2s ease-out; }
+  #lightbox-inner { width: 100%; max-width: 900px; animation: popIn 0.2s ease-out; }
   @keyframes popIn { from { transform: scale(0.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-  #lightbox-video { width: 100%; display: none; background: #000; outline: none; }
+  #lightbox-video { width: 100%; display: block; background: #000; outline: none; max-height: 80vh; }
   #lightbox-bar { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0; gap: 1rem; }
   #lightbox-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 0.08em; color: var(--accent); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #lightbox-close { background: none; border: 1px solid var(--border); color: var(--muted); font-family: 'Space Mono', monospace; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.45rem 0.9rem; cursor: pointer; transition: border-color 0.15s, color 0.15s; flex-shrink: 0; }
   #lightbox-close:hover { border-color: var(--accent); color: var(--accent); }
-  #lb-status { display: none; padding: 3rem 0; text-align: center; font-size: 0.75rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); }
-  #lb-progress-wrap { height: 3px; background: var(--border); margin-top: 0.5rem; border-radius: 2px; overflow: hidden; display: none; }
-  #lb-progress-bar { height: 100%; width: 0%; background: var(--accent); transition: width 0.1s linear; }
   footer { border-top: 1px solid var(--border); padding: 1.5rem 2rem; font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); text-align: center; }
 </style>
 </head>
@@ -65,9 +62,7 @@
       <div id="lightbox-title"></div>
       <button id="lightbox-close" onclick="closeLightbox()">✕ chiudi</button>
     </div>
-    <div id="lb-status"></div>
-    <div id="lb-progress-wrap"><div id="lb-progress-bar"></div></div>
-    <video id="lightbox-video" controls playsinline></video>
+    <video id="lightbox-video" controls playsinline preload="auto"></video>
   </div>
 </div>
 
@@ -77,13 +72,12 @@
 const BASE = "https://raw.githubusercontent.com/Zacker171819/SandrCollArchive/refs/heads/main/";
 
 const videos = [
-  { file: "Sandrini ytp full collab.mp4",                  title: "Full Collab",         tag: "Collab" },
-  { file: "Sandrini ytp incanza spiaggia.mp4",             title: "Incanza Spiaggia",    tag: "Edit"   },
-  { file: "Sandrux ytp.mp4",                               title: "Sandrux YTP",         tag: "Cut"    },
-  { file: "ytp Sandrini - Obbligatorio soffrire.mp4",      title: "Obbligatorio Soffrire", tag: "YTP"  }
+  { file: "Sandrini ytp full collab.mp4",               title: "Full Collab",           tag: "Collab" },
+  { file: "Sandrini ytp incanza spiaggia.mp4",          title: "Incanza Spiaggia",      tag: "Edit"   },
+  { file: "Sandrux ytp.mp4",                            title: "Sandrux YTP",           tag: "Cut"    },
+  { file: "ytp Sandrini - Obbligatorio soffrire.mp4",   title: "Obbligatorio Soffrire", tag: "YTP"    }
 ];
 
-const blobCache = {};
 const grid = document.getElementById('grid');
 
 videos.forEach((v, i) => {
@@ -105,87 +99,25 @@ videos.forEach((v, i) => {
   grid.appendChild(card);
 });
 
-const lightbox    = document.getElementById('lightbox');
-const lbVideo     = document.getElementById('lightbox-video');
-const lbTitle     = document.getElementById('lightbox-title');
-const lbStatus    = document.getElementById('lb-status');
-const lbProgWrap  = document.getElementById('lb-progress-wrap');
-const lbProgBar   = document.getElementById('lb-progress-bar');
+const lightbox = document.getElementById('lightbox');
+const lbVideo  = document.getElementById('lightbox-video');
+const lbTitle  = document.getElementById('lightbox-title');
 
-function setStatus(msg, color) {
-  lbStatus.textContent = msg;
-  lbStatus.style.color = color || 'var(--accent)';
-  lbStatus.style.display = msg ? 'block' : 'none';
-}
-
-async function openLightbox(filename, title) {
+function openLightbox(filename, title) {
   lbTitle.textContent = title;
-  lbVideo.style.display = 'none';
-  lbVideo.src = '';
-  lbProgWrap.style.display = 'none';
-  lbProgBar.style.width = '0%';
-  setStatus('Caricamento...');
-  lightbox.classList.add('active');
-
   const url = BASE + encodeURIComponent(filename);
-
-  try {
-    if (blobCache[filename]) {
-      setStatus('');
-      lbVideo.src = blobCache[filename];
-      lbVideo.style.display = 'block';
-      lbVideo.play();
-      return;
-    }
-
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-
-    const total = parseInt(resp.headers.get('content-length') || '0');
-    const reader = resp.body.getReader();
-    const chunks = [];
-    let received = 0;
-
-    if (total) {
-      lbProgWrap.style.display = 'block';
-    }
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      chunks.push(value);
-      received += value.length;
-      if (total) {
-        const pct = Math.round((received / total) * 100);
-        lbProgBar.style.width = pct + '%';
-        setStatus('Caricamento ' + pct + '%');
-      }
-    }
-
-    const blob = new Blob(chunks, { type: 'video/mp4' });
-    const blobUrl = URL.createObjectURL(blob);
-    blobCache[filename] = blobUrl;
-
-    lbProgWrap.style.display = 'none';
-    setStatus('');
-    lbVideo.src = blobUrl;
-    lbVideo.style.display = 'block';
-    lbVideo.play();
-
-  } catch (err) {
-    lbProgWrap.style.display = 'none';
-    setStatus('⚠ Errore: ' + err.message, '#e05555');
-    console.error(err);
-  }
+  lbVideo.src = url;
+  lbVideo.load();
+  lightbox.classList.add('active');
+  // play after enough data buffered
+  lbVideo.addEventListener('canplay', () => lbVideo.play(), { once: true });
 }
 
 function closeLightbox() {
   lightbox.classList.remove('active');
   lbVideo.pause();
-  lbVideo.src = '';
-  lbVideo.style.display = 'none';
-  setStatus('');
-  lbProgWrap.style.display = 'none';
+  lbVideo.removeAttribute('src');
+  lbVideo.load();
 }
 
 lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
